@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Rewrite with AI",
+  "description": "Rewrite selected text with OpenAI or Gemini in Chrome's side panel.",
+  "version": "1.0.0",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "contextMenus",
+    "sidePanel",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/sidepanel.html"
+  },
+  "options_page": "src/options/options.html",
+  "action": {
+    "default_title": "Rewrite with AI"
+  }
+}
