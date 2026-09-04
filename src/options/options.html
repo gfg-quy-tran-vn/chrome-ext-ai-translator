@@ -34,16 +34,24 @@
           <h2 id="openai-heading">OpenAI configuration</h2>
           <label for="openai-api-key">API key</label>
           <input id="openai-api-key" name="openaiApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+          <button class="secondary validate-button" id="validate-openai" type="button">Validate key &amp; load models</button>
           <label for="openai-model">Model</label>
-          <input id="openai-model" name="openaiModel" type="text" autocomplete="off" spellcheck="false">
+          <select id="openai-model" name="openaiModel" disabled>
+            <option value="">Validate the API key to load models</option>
+          </select>
+          <p class="model-status" id="openai-model-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="card provider-fields" id="gemini-fields" aria-labelledby="gemini-heading">
           <h2 id="gemini-heading">Gemini configuration</h2>
           <label for="gemini-api-key">API key</label>
           <input id="gemini-api-key" name="geminiApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
+          <button class="secondary validate-button" id="validate-gemini" type="button">Validate key &amp; load models</button>
           <label for="gemini-model">Model</label>
-          <input id="gemini-model" name="geminiModel" type="text" autocomplete="off" spellcheck="false">
+          <select id="gemini-model" name="geminiModel" disabled>
+            <option value="">Validate the API key to load models</option>
+          </select>
+          <p class="model-status" id="gemini-model-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="card" aria-labelledby="prompt-heading">
@@ -55,7 +63,7 @@
 
         <div class="form-actions">
           <button class="secondary danger" id="forget-keys" type="button">Forget keys</button>
-          <button class="primary" type="submit">Save settings</button>
+          <button class="primary" id="save-settings" type="submit">Save settings</button>
         </div>
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </form>

@@ -72,6 +72,7 @@ label:not(.provider-option) {
 
 input[type="text"],
 input[type="password"],
+select,
 textarea {
   width: 100%;
   border: 1px solid #cbd2df;
@@ -89,9 +90,38 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   border-color: #6873e6;
   box-shadow: 0 0 0 3px rgb(104 115 230 / 16%);
+}
+
+select:disabled,
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.validate-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.model-status {
+  min-height: 18px;
+  margin: 8px 0 0;
+  color: #697586;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.model-status[data-kind="success"] {
+  color: #167647;
+}
+
+.model-status[data-kind="error"],
+.model-status[data-kind="invalid"] {
+  color: #b42318;
 }
 
 .provider-options {
@@ -226,6 +256,7 @@ button {
 
   input[type="text"],
   input[type="password"],
+  select,
   textarea,
   .secondary {
     border-color: #424b5d;

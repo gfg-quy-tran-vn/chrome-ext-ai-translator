@@ -23,12 +23,13 @@ Chrome keeps the unpacked extension linked to this folder. After updating its fi
 
 1. Choose **OpenAI** or **Gemini**.
 2. Enter that provider's API key.
-3. Keep the suggested model or enter another model available to your provider account.
-4. Edit the rewrite instruction if desired. The default is:
+3. Click **Validate key & load models**. An invalid key leaves the model dropdown empty and displays an error. Network and provider outages are reported separately so they are not mistaken for an invalid key.
+4. Choose a model from the returned list. OpenAI shows the models available to the key; Gemini shows models that support `generateContent`.
+5. Edit the rewrite instruction if desired. The default is:
 
    > Rewrite the selected text as clear, well-structured English sentences.
 
-5. Click **Save settings**.
+6. Click **Save settings**.
 
 Both provider configurations remain in local Chrome extension storage, but only the selected provider is called. **Forget keys** removes both saved API keys while preserving the other settings.
 
@@ -47,6 +48,7 @@ If the provider configuration is missing or rejected, choose **Open settings** f
 - API keys are stored in `chrome.storage.local`, not synchronized storage.
 - Storage access is restricted to trusted extension pages.
 - The extension sends requests only to the official OpenAI and Gemini HTTPS API origins.
+- Model discovery is performed by the trusted background worker; webpage scripts never see keys or model-list responses.
 - The webpage and its scripts never receive an API key; no content script is used.
 - Selected text and responses are kept only in `chrome.storage.session` and expire with the browser session.
 - Output is rendered as text, never interpreted as webpage HTML.
@@ -71,7 +73,10 @@ find src tests -name '*.js' -print0 | xargs -0 -n1 node --check
 ## Manual verification checklist
 
 - [ ] Chrome loads the unpacked extension without manifest or service-worker errors.
-- [ ] The options page initially selects OpenAI and displays the default prompt and models.
+- [ ] The options page initially selects OpenAI and displays the default prompt with an empty, disabled model dropdown.
+- [ ] A valid OpenAI key loads a sorted model dropdown; an invalid key clears it and displays an invalid-key error.
+- [ ] A valid Gemini key loads only `generateContent` models; an invalid key clears the dropdown and displays an invalid-key error.
+- [ ] A transient model-loading failure is distinguishable from an invalid key and preserves an existing saved model.
 - [ ] OpenAI settings save and remain after closing and reopening the options page.
 - [ ] Gemini settings save and remain after closing and reopening the options page.
 - [ ] Switching providers displays the matching key and model while preserving the other provider's values.
