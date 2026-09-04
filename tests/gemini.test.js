@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { callGemini } from '../src/providers/gemini.js';
+import { callGemini, listGeminiModels } from '../src/providers/gemini.js';
 import { ProviderError } from '../src/providers/provider-error.js';
 
 function jsonResponse(body, status = 200) {
@@ -111,6 +111,77 @@ test('normalizes Gemini network failures', async () => {
     }),
     (error) => {
       assert.equal(error.message, 'Could not reach Gemini. Check your connection and try again.');
+      assert.equal(error.retryable, true);
+      return true;
+    },
+  );
+});
+
+test('lists paginated Gemini models that support generateContent', async () => {
+  const requests = [];
+  const responses = [
+    jsonResponse({
+      models: [
+        { name: 'models/gemini-z', supportedGenerationMethods: ['generateContent'] },
+        { name: 'models/embed-only', supportedGenerationMethods: ['embedContent'] },
+      ],
+      nextPageToken: 'next-token',
+    }),
+    jsonResponse({
+      models: [
+        { name: 'models/gemini-a', supportedGenerationMethods: ['generateContent'] },
+        { name: 'models/gemini-z', supportedGenerationMethods: ['generateContent'] },
+      ],
+    }),
+  ];
+
+  const models = await listGeminiModels({
+    apiKey: 'test-key',
+    fetchImpl: async (url, options) => {
+      requests.push(url);
+      assert.equal(options.method, 'GET');
+      assert.equal(options.headers['x-goog-api-key'], 'test-key');
+      assert.equal(url.includes('test-key'), false);
+      return responses.shift();
+    },
+  });
+
+  assert.deepEqual(requests, [
+    'https://generativelanguage.googleapis.com/v1beta/models',
+    'https://generativelanguage.googleapis.com/v1beta/models?pageToken=next-token',
+  ]);
+  assert.deepEqual(models, ['gemini-a', 'gemini-z']);
+});
+
+test('marks a rejected Gemini model-list key as invalid', async () => {
+  await assert.rejects(
+    listGeminiModels({
+      apiKey: 'secret-that-must-not-leak',
+      fetchImpl: async () => jsonResponse({}, 403),
+    }),
+    (error) => {
+      assert.equal(error.invalidKey, true);
+      assert.equal(error.configuration, true);
+      assert.equal(error.retryable, false);
+      assert.equal(error.message.includes('secret-that-must-not-leak'), false);
+      return true;
+    },
+  );
+});
+
+test('rejects an empty Gemini generation-model list', async () => {
+  await assert.rejects(
+    listGeminiModels({
+      apiKey: 'secret',
+      fetchImpl: async () => jsonResponse({
+        models: [{
+          name: 'models/embed-only',
+          supportedGenerationMethods: ['embedContent'],
+        }],
+      }),
+    }),
+    (error) => {
+      assert.equal(error.message, 'Gemini returned no available generation models.');
       assert.equal(error.retryable, true);
       return true;
     },

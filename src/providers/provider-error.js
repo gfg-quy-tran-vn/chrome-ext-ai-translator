@@ -1,9 +1,13 @@
 export class ProviderError extends Error {
-  constructor(message, { retryable = false, configuration = false } = {}) {
+  constructor(
+    message,
+    { retryable = false, configuration = false, invalidKey = false } = {},
+  ) {
     super(message);
     this.name = 'ProviderError';
     this.retryable = retryable;
     this.configuration = configuration;
+    this.invalidKey = invalidKey;
   }
 }
 
@@ -11,7 +15,7 @@ export function httpProviderError(provider, status) {
   if (status === 401 || status === 403) {
     return new ProviderError(
       `${provider} rejected the API key. Check it in Settings.`,
-      { configuration: true },
+      { configuration: true, invalidKey: true },
     );
   }
 
