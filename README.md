@@ -11,11 +11,17 @@ Provider API usage may incur charges on the account associated with the configur
 
 ## Install locally
 
-1. Open `chrome://extensions` in Chrome.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Choose the repository folder containing `manifest.json`.
-5. Open the extension's **Details** page and select **Extension options**.
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/QuyTran/chrome-ext-ai-translator.git
+   ```
+
+2. Open `chrome://extensions` in Chrome.
+3. Enable **Developer mode**.
+4. Click **Load unpacked**.
+5. In the folder picker, open the cloned `chrome-ext-ai-translator` directory and select it. Chrome loads an unpacked extension from the folder that contains `manifest.json` at its root — that file sits next to `README.md`, not inside `src/`.
+6. Open the extension's **Details** page and select **Extension options**.
 
 Chrome keeps the unpacked extension linked to this folder. After updating its files, use the refresh button on `chrome://extensions`.
 
