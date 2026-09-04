@@ -1,0 +1,244 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #182230;
+  background: #f4f6fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+.settings-shell {
+  width: min(680px, calc(100% - 32px));
+  margin: 48px auto;
+}
+
+header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #535fd7;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.035em;
+}
+
+.intro {
+  margin: 10px 0 0;
+  color: #596579;
+  font-size: 16px;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  padding: 22px;
+  border: 1px solid #dce1ea;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgb(26 39 64 / 6%);
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+
+label:not(.provider-option) {
+  display: block;
+  margin: 16px 0 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+  width: 100%;
+  border: 1px solid #cbd2df;
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #6873e6;
+  box-shadow: 0 0 0 3px rgb(104 115 230 / 16%);
+}
+
+.provider-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.provider-option {
+  position: relative;
+}
+
+.provider-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.provider-option span {
+  display: block;
+  padding: 11px 16px;
+  border: 1px solid #cbd2df;
+  border-radius: 9px;
+  text-align: center;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.provider-option input:checked + span {
+  border-color: #5965dc;
+  color: #4652cf;
+  background: #f0f1ff;
+  box-shadow: inset 0 0 0 1px #5965dc;
+}
+
+.provider-option input:focus-visible + span {
+  outline: 3px solid rgb(104 115 230 / 28%);
+  outline-offset: 2px;
+}
+
+.help {
+  margin: 9px 0 0;
+  color: #697586;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 0 17px;
+  font: inherit;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.primary {
+  color: #fff;
+  background: #5662d8;
+}
+
+.primary:hover {
+  background: #4652c8;
+}
+
+.secondary {
+  border-color: #cbd2df;
+  color: #344054;
+  background: #fff;
+}
+
+.danger {
+  color: #b42318;
+}
+
+.status {
+  min-height: 20px;
+  margin: 0;
+  color: #167647;
+  font-size: 13px;
+  text-align: right;
+}
+
+.status[data-kind="error"] {
+  color: #b42318;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #eef1f6;
+    background: #11151d;
+  }
+
+  .intro,
+  .help {
+    color: #aab3c3;
+  }
+
+  .card {
+    border-color: #303746;
+    background: #1a202b;
+    box-shadow: none;
+  }
+
+  label:not(.provider-option) {
+    color: #cbd2df;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  .secondary {
+    border-color: #424b5d;
+    color: #eef1f6;
+    background: #141923;
+  }
+
+  .provider-option span {
+    border-color: #424b5d;
+  }
+
+  .provider-option input:checked + span {
+    color: #cbd0ff;
+    background: #292e54;
+  }
+}

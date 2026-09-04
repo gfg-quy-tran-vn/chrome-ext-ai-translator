@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rewrite with AI Settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="settings-shell">
+      <header>
+        <p class="eyebrow">Rewrite with AI</p>
+        <h1>Settings</h1>
+        <p class="intro">Choose a provider and customize how selected text is rewritten.</p>
+      </header>
+
+      <form id="settings-form">
+        <section class="card" aria-labelledby="provider-heading">
+          <h2 id="provider-heading">AI provider</h2>
+          <div class="provider-options">
+            <label class="provider-option">
+              <input type="radio" name="provider" value="openai">
+              <span>OpenAI</span>
+            </label>
+            <label class="provider-option">
+              <input type="radio" name="provider" value="gemini">
+              <span>Gemini</span>
+            </label>
+          </div>
+          <p class="help">Both configurations stay saved locally. Only the selected provider is used.</p>
+        </section>
+
+        <section class="card provider-fields" id="openai-fields" aria-labelledby="openai-heading">
+          <h2 id="openai-heading">OpenAI configuration</h2>
+          <label for="openai-api-key">API key</label>
+          <input id="openai-api-key" name="openaiApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+          <label for="openai-model">Model</label>
+          <input id="openai-model" name="openaiModel" type="text" autocomplete="off" spellcheck="false">
+        </section>
+
+        <section class="card provider-fields" id="gemini-fields" aria-labelledby="gemini-heading">
+          <h2 id="gemini-heading">Gemini configuration</h2>
+          <label for="gemini-api-key">API key</label>
+          <input id="gemini-api-key" name="geminiApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
+          <label for="gemini-model">Model</label>
+          <input id="gemini-model" name="geminiModel" type="text" autocomplete="off" spellcheck="false">
+        </section>
+
+        <section class="card" aria-labelledby="prompt-heading">
+          <h2 id="prompt-heading">Custom prompt</h2>
+          <label class="sr-only" for="custom-prompt">Rewrite instruction</label>
+          <textarea id="custom-prompt" name="prompt" rows="5"></textarea>
+          <p class="help">The selected text is added automatically after this instruction.</p>
+        </section>
+
+        <div class="form-actions">
+          <button class="secondary danger" id="forget-keys" type="button">Forget keys</button>
+          <button class="primary" type="submit">Save settings</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
