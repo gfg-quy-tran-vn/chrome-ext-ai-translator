@@ -1,6 +1,7 @@
 import { runRewrite } from './coordinator.js';
-import { callGemini } from './providers/gemini.js';
-import { callOpenAI } from './providers/openai.js';
+import { handleModelDiscovery } from './model-discovery.js';
+import { callGemini, listGeminiModels } from './providers/gemini.js';
+import { callOpenAI, listOpenAIModels } from './providers/openai.js';
 
 const MENU_ID = 'rewrite-with-ai';
 const SESSION_STATE_KEY = 'rewriteRequestState';
@@ -56,23 +57,43 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== 'retry-last-request') {
-    return false;
+  if (message?.type === 'list-provider-models') {
+    handleModelDiscovery(message, {
+      providers: {
+        openai: listOpenAIModels,
+        gemini: listGeminiModels,
+      },
+    })
+      .then(sendResponse)
+      .catch(() => sendResponse({
+        ok: false,
+        error: {
+          message: 'Could not load models. Try again.',
+          invalidKey: false,
+          retryable: true,
+        },
+      }));
+
+    return true;
   }
 
-  chrome.storage.session.get(SESSION_STATE_KEY)
-    .then((stored) => {
-      const selectedText = stored[SESSION_STATE_KEY]?.selectedText;
-      if (!selectedText) {
-        throw new Error('There is no previous selection to retry.');
-      }
-      return rewrite(selectedText);
-    })
-    .then(() => sendResponse({ ok: true }))
-    .catch((error) => sendResponse({
-      ok: false,
-      message: error?.message || 'Retry failed.',
-    }));
+  if (message?.type === 'retry-last-request') {
+    chrome.storage.session.get(SESSION_STATE_KEY)
+      .then((stored) => {
+        const selectedText = stored[SESSION_STATE_KEY]?.selectedText;
+        if (!selectedText) {
+          throw new Error('There is no previous selection to retry.');
+        }
+        return rewrite(selectedText);
+      })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({
+        ok: false,
+        message: error?.message || 'Retry failed.',
+      }));
 
-  return true;
+    return true;
+  }
+
+  return false;
 });
