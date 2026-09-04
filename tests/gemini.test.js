@@ -169,6 +169,33 @@ test('marks a rejected Gemini model-list key as invalid', async () => {
   );
 });
 
+test('recognizes Gemini API_KEY_INVALID responses returned as HTTP 400', async () => {
+  await assert.rejects(
+    listGeminiModels({
+      apiKey: 'invalid-test-key',
+      fetchImpl: async () => jsonResponse({
+        error: {
+          code: 400,
+          message: 'API key not valid. Please pass a valid API key.',
+          status: 'INVALID_ARGUMENT',
+          details: [{
+            '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+            reason: 'API_KEY_INVALID',
+            domain: 'googleapis.com',
+          }],
+        },
+      }, 400),
+    }),
+    (error) => {
+      assert.equal(error.invalidKey, true);
+      assert.equal(error.configuration, true);
+      assert.equal(error.retryable, false);
+      assert.equal(error.message, 'Gemini rejected the API key. Check it in Settings.');
+      return true;
+    },
+  );
+});
+
 test('rejects an empty Gemini generation-model list', async () => {
   await assert.rejects(
     listGeminiModels({

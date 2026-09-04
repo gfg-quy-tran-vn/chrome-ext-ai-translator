@@ -7,6 +7,34 @@ import {
 const GEMINI_API_ROOT =
   'https://generativelanguage.googleapis.com/v1beta/models';
 
+async function geminiHttpProviderError(response) {
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    // Some gateway errors do not contain JSON. Fall back to the HTTP status.
+  }
+
+  const details = Array.isArray(data?.error?.details) ? data.error.details : [];
+  const hasInvalidKeyReason = details.some(
+    (detail) => detail?.reason === 'API_KEY_INVALID',
+  );
+  const message = typeof data?.error?.message === 'string'
+    ? data.error.message
+    : '';
+  const hasInvalidKeyMessage = /api key/i.test(message)
+    && /(invalid|not valid|not found)/i.test(message);
+
+  if (hasInvalidKeyReason || hasInvalidKeyMessage) {
+    return new ProviderError(
+      'Gemini rejected the API key. Check it in Settings.',
+      { configuration: true, invalidKey: true },
+    );
+  }
+
+  return httpProviderError('Gemini', response.status);
+}
+
 export async function callGemini({ apiKey, model, prompt, fetchImpl = fetch }) {
   const url = `${GEMINI_API_ROOT}/${encodeURIComponent(model)}:generateContent`;
 
@@ -24,7 +52,7 @@ export async function callGemini({ apiKey, model, prompt, fetchImpl = fetch }) {
     });
 
     if (!response.ok) {
-      throw httpProviderError('Gemini', response.status);
+      throw await geminiHttpProviderError(response);
     }
 
     const data = await response.json();
@@ -64,7 +92,7 @@ export async function listGeminiModels({ apiKey, fetchImpl = fetch }) {
       });
 
       if (!response.ok) {
-        throw httpProviderError('Gemini', response.status);
+        throw await geminiHttpProviderError(response);
       }
 
       const data = await response.json();
