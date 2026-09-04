@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rewrite with AI</title>
+    <link rel="stylesheet" href="sidepanel.css">
+  </head>
+  <body>
+    <main>
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">AI assistant</p>
+          <h1>Rewrite with AI</h1>
+        </div>
+        <button id="header-settings-button" class="icon-button" type="button" aria-label="Open settings" title="Open settings">⚙</button>
+      </header>
+
+      <section id="empty-view" class="empty-view">
+        <div class="empty-icon" aria-hidden="true">Aa</div>
+        <h2>Ready to rewrite</h2>
+        <p>Select text on a webpage, right-click it, and choose <strong>Rewrite with AI</strong>.</p>
+      </section>
+
+      <section id="request-view" hidden>
+        <div class="meta-row">
+          <span id="provider-label" class="provider-badge">AI</span>
+          <span id="status-label" class="status-label">Ready</span>
+        </div>
+
+        <section class="content-section" aria-labelledby="selected-heading">
+          <h2 id="selected-heading">Selected text</h2>
+          <blockquote id="selected-text"></blockquote>
+        </section>
+
+        <section id="loading-view" class="loading-card" aria-live="polite" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Rewriting your selection…</span>
+        </section>
+
+        <section id="response-view" class="content-section" aria-labelledby="response-heading" hidden>
+          <h2 id="response-heading">Response</h2>
+          <p id="result" class="result" aria-live="polite"></p>
+        </section>
+
+        <section id="error-view" class="error-card" aria-labelledby="error-heading" hidden>
+          <h2 id="error-heading">Could not rewrite</h2>
+          <p id="error-message"></p>
+        </section>
+
+        <div class="actions">
+          <button id="copy-button" class="primary" type="button" hidden>Copy response</button>
+          <button id="retry-button" class="secondary" type="button" hidden>Retry</button>
+          <button id="configuration-settings-button" class="secondary" type="button" hidden>Open settings</button>
+        </div>
+        <p id="action-status" class="action-status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>
