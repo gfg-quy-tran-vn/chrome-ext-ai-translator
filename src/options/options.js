@@ -108,9 +108,54 @@ function renderModelStates() {
   renderSaveState();
 }
 
+function promptTitle(prompt) {
+  return prompt.name.trim() || 'Untitled prompt';
+}
+
 function renderPromptItem(prompt) {
   const item = document.createElement('div');
   item.className = 'prompt-item';
+  item.classList.toggle('collapsed', !prompt.expanded);
+
+  // Collapsed header: name summary plus delete, click to expand and edit.
+  const header = document.createElement('div');
+  header.className = 'prompt-header';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'prompt-toggle';
+  toggle.setAttribute('aria-expanded', String(Boolean(prompt.expanded)));
+
+  const caret = document.createElement('span');
+  caret.className = 'prompt-caret';
+  caret.setAttribute('aria-hidden', 'true');
+
+  const title = document.createElement('span');
+  title.className = 'prompt-title';
+  title.textContent = promptTitle(prompt);
+
+  toggle.append(caret, title);
+  toggle.addEventListener('click', () => {
+    prompt.expanded = !prompt.expanded;
+    item.classList.toggle('collapsed', !prompt.expanded);
+    toggle.setAttribute('aria-expanded', String(prompt.expanded));
+  });
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'secondary danger';
+  deleteButton.textContent = 'Delete prompt';
+  deleteButton.disabled = draftPrompts.length <= 1;
+  deleteButton.addEventListener('click', () => {
+    draftPrompts = draftPrompts.filter((candidate) => candidate !== prompt);
+    renderPrompts();
+    showStatus('');
+  });
+
+  header.append(toggle, deleteButton);
+
+  const body = document.createElement('div');
+  body.className = 'prompt-body';
 
   const nameLabel = document.createElement('label');
   nameLabel.textContent = 'Name';
@@ -121,6 +166,7 @@ function renderPromptItem(prompt) {
   nameInput.value = prompt.name;
   nameInput.addEventListener('input', () => {
     prompt.name = nameInput.value;
+    title.textContent = promptTitle(prompt);
   });
   nameLabel.append(nameInput);
 
@@ -134,18 +180,9 @@ function renderPromptItem(prompt) {
   });
   instructionLabel.append(instructionInput);
 
-  const deleteButton = document.createElement('button');
-  deleteButton.type = 'button';
-  deleteButton.className = 'secondary danger';
-  deleteButton.textContent = 'Delete prompt';
-  deleteButton.disabled = draftPrompts.length <= 1;
-  deleteButton.addEventListener('click', () => {
-    draftPrompts = draftPrompts.filter((candidate) => candidate !== prompt);
-    renderPrompts();
-    showStatus('');
-  });
+  body.append(nameLabel, instructionLabel);
 
-  item.append(nameLabel, instructionLabel, deleteButton);
+  item.append(header, body);
   return item;
 }
 
@@ -222,7 +259,7 @@ form.addEventListener('change', (event) => {
 });
 
 addPromptButton.addEventListener('click', () => {
-  draftPrompts.push({ id: crypto.randomUUID(), name: '', instruction: '' });
+  draftPrompts.push({ id: crypto.randomUUID(), name: '', instruction: '', expanded: true });
   renderPrompts();
   promptsList.lastElementChild?.querySelector('input').focus();
   showStatus('');
