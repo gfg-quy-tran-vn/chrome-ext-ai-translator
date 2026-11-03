@@ -94,6 +94,42 @@ test('dispatches to the active Gemini adapter with its configuration', async () 
   assert.equal(JSON.stringify(deps.states).includes('gemini-secret'), false);
 });
 
+test('uses a per-request model override when provided', async () => {
+  let received;
+  const deps = dependencies({
+    modelOverride: '  gpt-5  ',
+    providers: {
+      openai: async (options) => {
+        received = options;
+        return 'ok';
+      },
+      gemini: async () => '',
+    },
+  });
+
+  await runRewrite('words', 'rewrite', deps.value);
+
+  assert.equal(received.model, 'gpt-5');
+});
+
+test('falls back to the saved model when the override is blank', async () => {
+  let received;
+  const deps = dependencies({
+    modelOverride: '   ',
+    providers: {
+      openai: async (options) => {
+        received = options;
+        return 'ok';
+      },
+      gemini: async () => '',
+    },
+  });
+
+  await runRewrite('words', 'rewrite', deps.value);
+
+  assert.equal(received.model, 'gpt-5-mini');
+});
+
 test('turns invalid settings into a configuration error state', async () => {
   const deps = dependencies({
     loadSettings: async () => createDefaultSettings({ openaiApiKey: '' }),

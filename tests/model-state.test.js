@@ -23,6 +23,31 @@ test('loads a saved model as the only offline option', () => {
   assert.equal(canSaveModelState(state), true);
 });
 
+test('reuses a previously discovered model list when provided', () => {
+  const state = createModelState({
+    savedKey: 'saved-key',
+    savedModel: 'gpt-5-mini',
+    savedModels: ['gpt-5', 'gpt-5-mini', 'gpt-5-nano'],
+  });
+
+  assert.deepEqual(state.models, ['gpt-5', 'gpt-5-mini', 'gpt-5-nano']);
+  assert.deepEqual(state.savedModels, ['gpt-5', 'gpt-5-mini', 'gpt-5-nano']);
+  assert.equal(state.selectedModel, 'gpt-5-mini');
+  assert.equal(state.validation, 'saved');
+});
+
+test('restores the full saved list when reverting to the saved key', () => {
+  const initial = createModelState({
+    savedKey: 'old-key',
+    savedModel: 'gpt-5-mini',
+    savedModels: ['gpt-5', 'gpt-5-mini'],
+  });
+  const reverted = editKey(editKey(initial, 'new-key'), 'old-key');
+
+  assert.deepEqual(reverted.models, ['gpt-5', 'gpt-5-mini']);
+  assert.equal(reverted.selectedModel, 'gpt-5-mini');
+});
+
 test('starts empty when there is no saved key', () => {
   const state = createModelState({
     savedKey: '',

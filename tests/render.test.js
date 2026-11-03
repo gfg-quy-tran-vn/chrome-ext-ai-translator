@@ -4,7 +4,14 @@ import assert from 'node:assert/strict';
 import { renderState } from '../src/sidepanel/render.js';
 
 function element() {
-  return { hidden: false, textContent: '', innerHTML: '', disabled: false };
+  return {
+    hidden: false,
+    textContent: '',
+    innerHTML: '',
+    value: '',
+    disabled: false,
+    readOnly: false,
+  };
 }
 
 function createElements() {
@@ -12,6 +19,7 @@ function createElements() {
     emptyView: element(),
     requestView: element(),
     promptSelect: element(),
+    modelSelect: element(),
     loadingView: element(),
     responseView: element(),
     errorView: element(),
@@ -83,7 +91,7 @@ test('renders a loading request', () => {
   assert.equal(elements.loadingView.hidden, false);
   assert.equal(elements.responseView.hidden, true);
   assert.equal(elements.errorView.hidden, true);
-  assert.equal(elements.selectedText.textContent, 'rough words');
+  assert.equal(elements.selectedText.value, 'rough words');
   assert.equal(elements.providerLabel.textContent, 'Gemini');
   assert.equal(elements.statusLabel.textContent, 'Rewriting…');
 });
@@ -100,7 +108,7 @@ test('renders markdown success content and keeps it XSS-safe', () => {
     provider: 'openai',
   });
 
-  assert.equal(elements.selectedText.textContent, selectedText);
+  assert.equal(elements.selectedText.value, selectedText);
   assert.equal(
     elements.result.innerHTML,
     '<p><strong>Score: 88%</strong></p><h3>Risks</h3><ul><li>one</li></ul>',

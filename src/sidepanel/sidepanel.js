@@ -1,4 +1,4 @@
-import { createDefaultSettings } from '../core/settings.js';
+import { createDefaultSettings, getActiveProviderModels } from '../core/settings.js';
 import { renderState } from './render.js';
 
 const SESSION_STATE_KEY = 'rewriteRequestState';
@@ -15,6 +15,7 @@ const elements = {
   result: document.querySelector('#result'),
   errorMessage: document.querySelector('#error-message'),
   promptSelect: document.querySelector('#prompt-select'),
+  modelSelect: document.querySelector('#model-select'),
   copyButton: document.querySelector('#copy-button'),
   retryButton: document.querySelector('#retry-button'),
   settingsButton: document.querySelector('#configuration-settings-button'),
@@ -23,7 +24,10 @@ const elements = {
 const headerSettingsButton = document.querySelector('#header-settings-button');
 const actionStatus = document.querySelector('#action-status');
 let currentState = null;
-let promptSync = 0;
+let controlsSync = 0;
+// Model chosen for the next rewrite. Panel-only — it never changes the saved
+// default in Settings.
+let selectedModel = '';
 
 function update(state) {
   currentState = state ?? null;
@@ -31,29 +35,34 @@ function update(state) {
   elements.retryButton.disabled = false;
   renderState(elements, currentState);
   if (currentState?.status) {
-    void syncPromptSelect();
+    void syncControls();
   }
 }
 
-async function loadPrompts() {
-  return createDefaultSettings(await chrome.storage.local.get()).prompts;
+async function loadSettings() {
+  return createDefaultSettings(await chrome.storage.local.get());
 }
 
-async function syncPromptSelect() {
-  const syncId = ++promptSync;
-  let prompts;
+async function syncControls() {
+  const syncId = ++controlsSync;
+  let settings;
   try {
-    prompts = await loadPrompts();
+    settings = await loadSettings();
   } catch {
-    if (syncId === promptSync) {
+    if (syncId === controlsSync) {
       actionStatus.textContent = 'Could not load prompts.';
     }
     return;
   }
-  if (syncId !== promptSync) {
+  if (syncId !== controlsSync) {
     return;
   }
 
+  populatePromptSelect(settings.prompts);
+  populateModelSelect(settings);
+}
+
+function populatePromptSelect(prompts) {
   const placeholder = document.createElement('option');
   placeholder.value = '';
   placeholder.textContent = 'Choose a prompt';
@@ -73,6 +82,46 @@ async function syncPromptSelect() {
   select.disabled = currentState?.status === 'loading';
 }
 
+function populateModelSelect(settings) {
+  const savedModel = settings.provider === 'openai'
+    ? settings.openaiModel
+    : settings.geminiModel;
+  const models = getActiveProviderModels(settings).slice();
+  if (savedModel && !models.includes(savedModel)) {
+    models.unshift(savedModel);
+  }
+
+  const select = elements.modelSelect;
+
+  if (models.length === 0) {
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Set a model in Settings';
+    select.replaceChildren(placeholder);
+    select.value = '';
+    select.disabled = true;
+    selectedModel = '';
+    return;
+  }
+
+  const options = models.map((model) => {
+    const option = document.createElement('option');
+    option.value = model;
+    option.textContent = model;
+    return option;
+  });
+  select.replaceChildren(...options);
+
+  const desired = selectedModel && models.includes(selectedModel)
+    ? selectedModel
+    : savedModel && models.includes(savedModel)
+      ? savedModel
+      : models[0];
+  select.value = desired;
+  selectedModel = desired;
+  select.disabled = currentState?.status === 'loading';
+}
+
 async function runPrompt(promptId) {
   elements.promptSelect.disabled = true;
   actionStatus.textContent = 'Starting…';
@@ -81,6 +130,8 @@ async function runPrompt(promptId) {
     const response = await chrome.runtime.sendMessage({
       type: 'run-rewrite',
       promptId,
+      model: elements.modelSelect.value,
+      selectedText: elements.selectedText.value,
     });
     if (!response?.ok) {
       throw new Error(response?.message || 'Could not run the prompt.');
@@ -97,6 +148,10 @@ elements.promptSelect.addEventListener('change', () => {
     return;
   }
   void runPrompt(promptId);
+});
+
+elements.modelSelect.addEventListener('change', () => {
+  selectedModel = elements.modelSelect.value;
 });
 
 async function openSettings() {
@@ -131,6 +186,8 @@ elements.retryButton.addEventListener('click', async () => {
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'retry-last-request',
+      model: elements.modelSelect.value,
+      selectedText: elements.selectedText.value,
     });
     if (!response?.ok) {
       throw new Error(response?.message || 'Retry failed.');
@@ -147,9 +204,11 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     return;
   }
 
-  // Keep the picker in sync when prompts are edited in Settings.
-  if (areaName === 'local' && 'prompts' in changes && currentState?.status) {
-    void syncPromptSelect();
+  // Keep the pickers in sync when prompts or models are edited in Settings.
+  const watchedKeys = ['prompts', 'provider', 'openaiModel', 'geminiModel', 'openaiModels', 'geminiModels'];
+  if (areaName === 'local' && currentState?.status
+    && watchedKeys.some((key) => key in changes)) {
+    void syncControls();
   }
 });
 

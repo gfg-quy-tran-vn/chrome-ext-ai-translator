@@ -7,16 +7,24 @@ function normalizeModels(models) {
   )].sort((left, right) => left.localeCompare(right));
 }
 
-export function createModelState({ savedKey = '', savedModel = '' } = {}) {
+export function createModelState({ savedKey = '', savedModel = '', savedModels = [] } = {}) {
   const key = typeof savedKey === 'string' ? savedKey.trim() : '';
   const model = typeof savedModel === 'string' ? savedModel.trim() : '';
   const hasSavedConfiguration = Boolean(key && model);
 
+  // Reuse the previously discovered list when there is one, otherwise fall
+  // back to offering just the saved model offline.
+  const normalizedSaved = normalizeModels(savedModels);
+  const offlineModels = hasSavedConfiguration
+    ? (normalizedSaved.length ? ensureIncludes(normalizedSaved, model) : [model])
+    : [];
+
   return {
     savedKey: key,
     savedModel: model,
+    savedModels: offlineModels,
     key,
-    models: hasSavedConfiguration ? [model] : [],
+    models: offlineModels,
     selectedModel: hasSavedConfiguration ? model : '',
     validation: hasSavedConfiguration ? 'saved' : 'required',
     message: hasSavedConfiguration
@@ -26,13 +34,17 @@ export function createModelState({ savedKey = '', savedModel = '' } = {}) {
   };
 }
 
+function ensureIncludes(models, model) {
+  return models.includes(model) ? models : [model, ...models];
+}
+
 export function editKey(state, nextKey) {
   const key = typeof nextKey === 'string' ? nextKey.trim() : '';
   if (key === state.savedKey && key && state.savedModel) {
     return {
       ...state,
       key,
-      models: [state.savedModel],
+      models: state.savedModels.length ? state.savedModels : [state.savedModel],
       selectedModel: state.savedModel,
       validation: 'saved',
       message: 'Using the saved model. Validate the key to refresh this list.',

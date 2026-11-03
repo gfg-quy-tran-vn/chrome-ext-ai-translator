@@ -208,6 +208,7 @@ function providerConfigurationForSave(provider) {
   return {
     apiKey: mayUseCurrent ? state.key : state.savedKey,
     model: mayUseCurrent ? state.selectedModel : state.savedModel,
+    models: mayUseCurrent ? state.models : state.savedModels,
   };
 }
 
@@ -221,10 +222,12 @@ function renderSettings(settings) {
     openai: createModelState({
       savedKey: settings.openaiApiKey,
       savedModel: settings.openaiModel,
+      savedModels: settings.openaiModels,
     }),
     gemini: createModelState({
       savedKey: settings.geminiApiKey,
       savedModel: settings.geminiModel,
+      savedModels: settings.geminiModels,
     }),
   };
   renderProviderFields();
@@ -239,8 +242,10 @@ function readSettings() {
     provider: selectedProvider(),
     openaiApiKey: openai.apiKey,
     openaiModel: openai.model,
+    openaiModels: openai.models,
     geminiApiKey: gemini.apiKey,
     geminiModel: gemini.model,
+    geminiModels: gemini.models,
     prompts: trimmedPrompts(),
   });
 }
