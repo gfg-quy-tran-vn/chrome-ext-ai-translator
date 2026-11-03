@@ -1,3 +1,5 @@
+import { renderMarkdown } from './markdown.js';
+
 export function renderState(elements, state) {
   const hasRequest = Boolean(state?.status);
   elements.emptyView.hidden = hasRequest;
@@ -40,7 +42,7 @@ export function renderState(elements, state) {
       : isSuccess
         ? 'Ready'
         : 'Error';
-  elements.result.textContent = isSuccess ? state.result ?? '' : '';
+  elements.result.innerHTML = isSuccess ? renderMarkdown(state.result) : '';
   elements.errorMessage.textContent = isError
     ? state.error?.message ?? 'An unexpected error occurred.'
     : '';

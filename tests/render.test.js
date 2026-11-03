@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { renderState } from '../src/sidepanel/render.js';
 
 function element() {
-  return { hidden: false, textContent: '', disabled: false };
+  return { hidden: false, textContent: '', innerHTML: '', disabled: false };
 }
 
 function createElements() {
@@ -88,10 +88,10 @@ test('renders a loading request', () => {
   assert.equal(elements.statusLabel.textContent, 'Rewriting…');
 });
 
-test('renders success content through textContent and exposes result actions', () => {
+test('renders markdown success content and keeps it XSS-safe', () => {
   const elements = createElements();
   const selectedText = '<img src=x onerror=alert(1)>';
-  const result = '<b>safe text</b>';
+  const result = '**Score: 88%**\n\n### Risks\n- one';
 
   renderState(elements, {
     status: 'success',
@@ -101,13 +101,30 @@ test('renders success content through textContent and exposes result actions', (
   });
 
   assert.equal(elements.selectedText.textContent, selectedText);
-  assert.equal(elements.result.textContent, result);
+  assert.equal(
+    elements.result.innerHTML,
+    '<p><strong>Score: 88%</strong></p><h3>Risks</h3><ul><li>one</li></ul>',
+  );
   assert.equal(elements.providerLabel.textContent, 'OpenAI');
   assert.equal(elements.statusLabel.textContent, 'Ready');
   assert.equal(elements.responseView.hidden, false);
   assert.equal(elements.copyButton.hidden, false);
   assert.equal(elements.retryButton.hidden, false);
   assert.equal(elements.settingsButton.hidden, true);
+});
+
+test('escapes raw HTML embedded in a markdown response', () => {
+  const elements = createElements();
+
+  renderState(elements, {
+    status: 'success',
+    selectedText: 'hi',
+    result: '<img src=x onerror=alert(1)>',
+    provider: 'openai',
+  });
+
+  assert.ok(!elements.result.innerHTML.includes('<img'));
+  assert.ok(elements.result.innerHTML.includes('&lt;img'));
 });
 
 test('renders retryable errors without showing configuration settings', () => {
