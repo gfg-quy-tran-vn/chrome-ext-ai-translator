@@ -51,6 +51,10 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+chrome.action.onClicked.addListener(() => {
+  void chrome.runtime.openOptionsPage().catch(logInternalFailure);
+});
+
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId !== MENU_ID || !info.selectionText?.trim()) {
     return;
