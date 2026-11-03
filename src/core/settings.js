@@ -13,6 +13,10 @@ const DEFAULT_SETTINGS = Object.freeze({
 
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 
+// Model lists discovered when validating a key in Settings. The side panel
+// reads them to offer a per-request model picker without another API call.
+const MODEL_LIST_KEYS = ['openaiModels', 'geminiModels'];
+
 export function createDefaultSettings(stored = {}) {
   return {
     ...Object.fromEntries(
@@ -21,8 +25,23 @@ export function createDefaultSettings(stored = {}) {
         typeof stored[key] === 'string' ? stored[key] : DEFAULT_SETTINGS[key],
       ]),
     ),
+    ...Object.fromEntries(
+      MODEL_LIST_KEYS.map((key) => [key, normalizeModelList(stored[key])]),
+    ),
     prompts: normalizePrompts(stored.prompts, stored.prompt),
   };
+}
+
+function normalizeModelList(models) {
+  if (!Array.isArray(models)) {
+    return [];
+  }
+  return [...new Set(
+    models
+      .filter((model) => typeof model === 'string')
+      .map((model) => model.trim())
+      .filter(Boolean),
+  )];
 }
 
 // Each prompt is { id, name, instruction }. A legacy single `prompt` string
@@ -96,6 +115,16 @@ export function getActiveProviderConfig(settings) {
   }
 
   return null;
+}
+
+export function getActiveProviderModels(settings) {
+  if (settings.provider === 'openai') {
+    return settings.openaiModels ?? [];
+  }
+  if (settings.provider === 'gemini') {
+    return settings.geminiModels ?? [];
+  }
+  return [];
 }
 
 export function validateSettings(settings) {

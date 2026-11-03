@@ -1,3 +1,5 @@
+import { renderMarkdown } from './markdown.js';
+
 export function renderState(elements, state) {
   const hasRequest = Boolean(state?.status);
   elements.emptyView.hidden = hasRequest;
@@ -13,7 +15,7 @@ export function renderState(elements, state) {
     return;
   }
 
-  elements.selectedText.textContent = state.selectedText ?? '';
+  elements.selectedText.value = state.selectedText ?? '';
   elements.providerLabel.textContent = providerName(state.provider);
 
   const isChoosing = state.status === 'choose';
@@ -26,6 +28,8 @@ export function renderState(elements, state) {
   ));
 
   elements.promptSelect.disabled = isLoading;
+  elements.modelSelect.disabled = isLoading;
+  elements.selectedText.readOnly = isLoading;
   elements.loadingView.hidden = !isLoading;
   elements.responseView.hidden = !isSuccess;
   elements.errorView.hidden = !isError;
@@ -40,7 +44,7 @@ export function renderState(elements, state) {
       : isSuccess
         ? 'Ready'
         : 'Error';
-  elements.result.textContent = isSuccess ? state.result ?? '' : '';
+  elements.result.innerHTML = isSuccess ? renderMarkdown(state.result) : '';
   elements.errorMessage.textContent = isError
     ? state.error?.message ?? 'An unexpected error occurred.'
     : '';

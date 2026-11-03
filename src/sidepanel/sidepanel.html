@@ -29,9 +29,16 @@
         </div>
 
         <section class="content-section" aria-labelledby="selected-heading">
-          <h2 id="selected-heading">Selected text</h2>
-          <blockquote id="selected-text"></blockquote>
+          <h2 id="selected-heading">
+            <label for="selected-text">Selected text</label>
+          </h2>
+          <textarea id="selected-text" class="selected-text" rows="4" spellcheck="false"></textarea>
         </section>
+
+        <div class="prompt-field">
+          <label for="model-select">Model</label>
+          <select id="model-select"></select>
+        </div>
 
         <div class="prompt-field">
           <label for="prompt-select">Prompt</label>
@@ -45,7 +52,7 @@
 
         <section id="response-view" class="content-section" aria-labelledby="response-heading" hidden>
           <h2 id="response-heading">Response</h2>
-          <p id="result" class="result" aria-live="polite"></p>
+          <div id="result" class="result" aria-live="polite"></div>
         </section>
 
         <section id="error-view" class="error-card" aria-labelledby="error-heading" hidden>

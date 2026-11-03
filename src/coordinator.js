@@ -17,6 +17,7 @@ export async function runRewrite(selectedText, promptId, dependencies) {
     saveState,
     makeRequestId,
     providers,
+    modelOverride,
   } = dependencies;
 
   const settings = createDefaultSettings(await loadSettings());
@@ -48,9 +49,12 @@ export async function runRewrite(selectedText, promptId, dependencies) {
       throw new Error('The selected AI provider is not available.');
     }
 
+    const model = typeof modelOverride === 'string' && modelOverride.trim()
+      ? modelOverride.trim()
+      : config.model.trim();
     const result = await provider({
       apiKey: config.apiKey,
-      model: config.model.trim(),
+      model,
       prompt: buildPrompt(prompt.instruction, cleanText),
     });
     const successState = createSuccessState(loadingState, result);

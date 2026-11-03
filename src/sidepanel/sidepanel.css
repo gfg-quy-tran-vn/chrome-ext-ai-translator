@@ -128,23 +128,39 @@ button:disabled {
   margin-top: 18px;
 }
 
-blockquote,
 .result {
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
 }
 
-blockquote {
-  max-height: 160px;
-  overflow-y: auto;
+.selected-text {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  max-height: 200px;
   margin: 0;
   padding: 12px;
+  border: 1px solid #cbd2df;
   border-left: 3px solid #aab1ed;
   border-radius: 0 9px 9px 0;
   color: #566174;
   background: #eef1f6;
+  font: inherit;
   font-size: 12px;
   line-height: 1.5;
+  resize: vertical;
+  overflow-y: auto;
+  outline: none;
+}
+
+.selected-text:focus {
+  border-color: #6873e6;
+  border-left-color: #6873e6;
+  box-shadow: 0 0 0 3px rgb(104 115 230 / 16%);
+}
+
+.selected-text:read-only {
+  opacity: 0.7;
+  cursor: default;
 }
 
 .result {
@@ -155,6 +171,85 @@ blockquote {
   background: #fff;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.result > :first-child {
+  margin-top: 0;
+}
+
+.result > :last-child {
+  margin-bottom: 0;
+}
+
+.result p {
+  margin: 0 0 10px;
+}
+
+.result h1,
+.result h2,
+.result h3,
+.result h4,
+.result h5,
+.result h6 {
+  margin: 16px 0 8px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.result h1 { font-size: 17px; }
+.result h2 { font-size: 15px; }
+.result h3 { font-size: 14px; }
+.result h4,
+.result h5,
+.result h6 { font-size: 13px; }
+
+.result ul,
+.result ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+
+.result li {
+  margin: 3px 0;
+}
+
+.result a {
+  color: #4954c4;
+  text-decoration: underline;
+}
+
+.result code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #eef1f6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.result pre {
+  margin: 0 0 10px;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #eef1f6;
+}
+
+.result pre code {
+  padding: 0;
+  background: none;
+}
+
+.result blockquote {
+  max-height: none;
+  margin: 0 0 10px;
+  overflow: visible;
+  color: #566174;
+}
+
+.result hr {
+  margin: 14px 0;
+  border: none;
+  border-top: 1px solid #dbe0e9;
 }
 
 .loading-card,
@@ -227,7 +322,8 @@ blockquote {
 
 .prompt-field {
   display: grid;
-  gap: 7px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .prompt-field label {
@@ -300,14 +396,36 @@ blockquote {
     background: #292e54;
   }
 
-  blockquote,
+  .selected-text,
   .loading-card {
     color: #c7cfda;
     background: #202733;
   }
 
+  .selected-text {
+    border-color: #3c4556;
+    border-left-color: #464d82;
+  }
+
   .result {
     background: #181e28;
+  }
+
+  .result code,
+  .result pre {
+    background: #202733;
+  }
+
+  .result a {
+    color: #cbd0ff;
+  }
+
+  .result blockquote {
+    color: #aab3c3;
+  }
+
+  .result hr {
+    border-top-color: #303746;
   }
 
   #prompt-select {

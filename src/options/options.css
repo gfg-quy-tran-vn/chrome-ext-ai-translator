@@ -184,6 +184,66 @@ button:disabled {
   background: #f9fafc;
 }
 
+.prompt-item.collapsed {
+  gap: 0;
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.prompt-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  padding: 2px 0;
+  border: none;
+  color: inherit;
+  background: none;
+  font-size: 15px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.prompt-caret {
+  flex: none;
+  color: #697586;
+  font-size: 12px;
+  transition: transform 0.15s ease;
+}
+
+.prompt-caret::before {
+  content: "▾";
+}
+
+.prompt-item.collapsed .prompt-caret {
+  transform: rotate(-90deg);
+}
+
+.prompt-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.prompt-header .prompt-delete,
+.prompt-header button {
+  flex: none;
+}
+
+.prompt-body {
+  display: grid;
+  gap: 10px;
+}
+
+.prompt-item.collapsed .prompt-body {
+  display: none;
+}
+
 .prompt-item label {
   margin: 0;
 }
@@ -192,10 +252,6 @@ button:disabled {
 .prompt-item label > textarea {
   display: block;
   margin-top: 7px;
-}
-
-.prompt-item button {
-  justify-self: end;
 }
 
 .add-prompt-button {

@@ -7,6 +7,7 @@ import {
   createDefaultSettings,
   findPrompt,
   getActiveProviderConfig,
+  getActiveProviderModels,
   validatePrompts,
   validateSettings,
 } from '../src/core/settings.js';
@@ -18,8 +19,30 @@ test('creates safe editable defaults', () => {
     openaiModel: 'gpt-5-mini',
     geminiApiKey: '',
     geminiModel: 'gemini-2.5-flash',
+    openaiModels: [],
+    geminiModels: [],
     prompts: [{ id: DEFAULT_PROMPT_ID, name: 'Rewrite', instruction: DEFAULT_PROMPT }],
   });
+});
+
+test('normalizes and deduplicates stored model lists', () => {
+  const settings = createDefaultSettings({
+    openaiModels: ['gpt-5', ' gpt-5 ', '', 7, 'gpt-5-mini'],
+    geminiModels: 'not-an-array',
+  });
+
+  assert.deepEqual(settings.openaiModels, ['gpt-5', 'gpt-5-mini']);
+  assert.deepEqual(settings.geminiModels, []);
+});
+
+test('returns the active provider model list', () => {
+  const settings = createDefaultSettings({
+    provider: 'gemini',
+    openaiModels: ['gpt-5'],
+    geminiModels: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+  });
+
+  assert.deepEqual(getActiveProviderModels(settings), ['gemini-2.5-flash', 'gemini-2.5-pro']);
 });
 
 test('migrates a saved single prompt into a prompt named Rewrite', () => {

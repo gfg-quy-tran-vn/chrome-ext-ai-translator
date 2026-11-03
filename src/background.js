@@ -14,13 +14,14 @@ async function hardenStorageAccess() {
   ]);
 }
 
-function rewrite(selectedText, promptId) {
+function rewrite(selectedText, promptId, modelOverride) {
   return runRewrite(selectedText, promptId, {
     loadSettings: () => chrome.storage.local.get(),
     saveState: (state) => chrome.storage.session.set({
       [SESSION_STATE_KEY]: state,
     }),
     makeRequestId: () => crypto.randomUUID(),
+    modelOverride,
     providers: {
       openai: callOpenAI,
       gemini: callGemini,
@@ -49,6 +50,10 @@ chrome.runtime.onInstalled.addListener(() => {
       contexts: ['selection'],
     });
   });
+});
+
+chrome.action.onClicked.addListener(() => {
+  void chrome.runtime.openOptionsPage().catch(logInternalFailure);
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -89,13 +94,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     chrome.storage.session.get(SESSION_STATE_KEY)
       .then((stored) => {
         const state = stored[SESSION_STATE_KEY];
-        if (!state?.selectedText?.trim()) {
+        // The panel may send edited selected text; fall back to the stored
+        // selection it captured from the page.
+        const selectedText = typeof message.selectedText === 'string'
+          && message.selectedText.trim()
+          ? message.selectedText
+          : state?.selectedText;
+        if (!selectedText?.trim()) {
           throw new Error('Select text on a webpage, then choose a prompt.');
         }
         if (typeof message.promptId !== 'string' || !message.promptId) {
           throw new Error('Choose a prompt.');
         }
-        return rewrite(state.selectedText, message.promptId);
+        return rewrite(selectedText, message.promptId, message.model);
       })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({
@@ -109,11 +120,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === 'retry-last-request') {
     chrome.storage.session.get(SESSION_STATE_KEY)
       .then((stored) => {
-        const { selectedText, promptId } = stored[SESSION_STATE_KEY] ?? {};
+        const last = stored[SESSION_STATE_KEY] ?? {};
+        const promptId = last.promptId;
+        const selectedText = typeof message.selectedText === 'string'
+          && message.selectedText.trim()
+          ? message.selectedText
+          : last.selectedText;
         if (!selectedText) {
           throw new Error('There is no previous selection to retry.');
         }
-        return rewrite(selectedText, promptId);
+        return rewrite(selectedText, promptId, message.model);
       })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({
