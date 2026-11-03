@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   DEFAULT_PROMPT,
+  DEFAULT_PROMPT_ID,
   createDefaultSettings,
+  findPrompt,
   getActiveProviderConfig,
+  validatePrompts,
   validateSettings,
 } from '../src/core/settings.js';
 
@@ -15,8 +18,66 @@ test('creates safe editable defaults', () => {
     openaiModel: 'gpt-5-mini',
     geminiApiKey: '',
     geminiModel: 'gemini-2.5-flash',
-    prompt: DEFAULT_PROMPT,
+    prompts: [{ id: DEFAULT_PROMPT_ID, name: 'Rewrite', instruction: DEFAULT_PROMPT }],
   });
+});
+
+test('migrates a saved single prompt into a prompt named Rewrite', () => {
+  const settings = createDefaultSettings({ prompt: 'Make it formal.' });
+
+  assert.deepEqual(settings.prompts, [
+    { id: DEFAULT_PROMPT_ID, name: 'Rewrite', instruction: 'Make it formal.' },
+  ]);
+});
+
+test('keeps a stored prompt list and ignores the legacy prompt', () => {
+  const settings = createDefaultSettings({
+    prompt: 'legacy',
+    prompts: [{ id: 'a', name: 'Formal', instruction: 'Be formal.' }],
+  });
+
+  assert.deepEqual(settings.prompts, [{ id: 'a', name: 'Formal', instruction: 'Be formal.' }]);
+});
+
+test('falls back to the default prompt when stored prompts are unusable', () => {
+  const settings = createDefaultSettings({ prompts: [{ name: 'no id' }] });
+
+  assert.deepEqual(settings.prompts, [
+    { id: DEFAULT_PROMPT_ID, name: 'Rewrite', instruction: DEFAULT_PROMPT },
+  ]);
+});
+
+test('finds a prompt by id and returns null when it is missing', () => {
+  const prompts = [{ id: 'a', name: 'Formal', instruction: 'Be formal.' }];
+
+  assert.equal(findPrompt(prompts, 'a'), prompts[0]);
+  assert.equal(findPrompt(prompts, 'gone'), null);
+});
+
+test('validates prompt names and instructions', () => {
+  assert.deepEqual(validatePrompts([]), {
+    valid: false,
+    message: 'Add at least one prompt.',
+  });
+  assert.deepEqual(validatePrompts([{ id: 'a', name: ' ', instruction: 'x' }]), {
+    valid: false,
+    message: 'Every prompt needs a name.',
+  });
+  assert.deepEqual(validatePrompts([{ id: 'a', name: 'Formal', instruction: '' }]), {
+    valid: false,
+    message: 'Add an instruction for "Formal".',
+  });
+  assert.deepEqual(validatePrompts([
+    { id: 'a', name: 'Formal', instruction: 'x' },
+    { id: 'b', name: 'formal', instruction: 'y' },
+  ]), {
+    valid: false,
+    message: 'Prompt names must be unique: "formal".',
+  });
+  assert.deepEqual(validatePrompts([
+    { id: 'a', name: 'Formal', instruction: 'x' },
+    { id: 'b', name: 'Short', instruction: 'y' },
+  ]), { valid: true });
 });
 
 test('merges only known stored settings', () => {

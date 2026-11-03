@@ -6,11 +6,12 @@ import {
 } from './core/request-state.js';
 import {
   createDefaultSettings,
+  findPrompt,
   getActiveProviderConfig,
   validateSettings,
 } from './core/settings.js';
 
-export async function runRewrite(selectedText, dependencies) {
+export async function runRewrite(selectedText, promptId, dependencies) {
   const {
     loadSettings,
     saveState,
@@ -20,11 +21,12 @@ export async function runRewrite(selectedText, dependencies) {
 
   const settings = createDefaultSettings(await loadSettings());
   const cleanText = selectedText?.trim() ?? '';
-  const loadingState = createLoadingState(
-    makeRequestId(),
-    cleanText,
-    settings.provider,
-  );
+  const prompt = findPrompt(settings.prompts, promptId);
+  const loadingState = {
+    ...createLoadingState(makeRequestId(), cleanText, settings.provider),
+    promptId,
+    promptName: prompt?.name ?? '',
+  };
 
   await saveState(loadingState);
 
@@ -36,6 +38,10 @@ export async function runRewrite(selectedText, dependencies) {
       throw error;
     }
 
+    if (!prompt) {
+      throw new Error('That prompt was deleted. Select the text again to choose a prompt.');
+    }
+
     const config = getActiveProviderConfig(settings);
     const provider = providers[config.provider];
     if (typeof provider !== 'function') {
@@ -45,7 +51,7 @@ export async function runRewrite(selectedText, dependencies) {
     const result = await provider({
       apiKey: config.apiKey,
       model: config.model.trim(),
-      prompt: buildPrompt(settings.prompt, cleanText),
+      prompt: buildPrompt(prompt.instruction, cleanText),
     });
     const successState = createSuccessState(loadingState, result);
     await saveState(successState);

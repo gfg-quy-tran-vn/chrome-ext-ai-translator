@@ -27,14 +27,42 @@ function dependencies(overrides = {}) {
 test('saves loading then successful OpenAI states without leaking keys', async () => {
   const deps = dependencies();
 
-  const result = await runRewrite(' rough text ', deps.value);
+  const result = await runRewrite(' rough text ', 'rewrite', deps.value);
 
   assert.deepEqual(deps.states.map((state) => state.status), ['loading', 'success']);
   assert.equal(deps.states[0].selectedText, 'rough text');
   assert.equal(deps.states[0].provider, 'openai');
+  assert.equal(deps.states[0].promptId, 'rewrite');
+  assert.equal(deps.states[0].promptName, 'Rewrite');
   assert.match(deps.states[1].result, /Selected text:\n---\nrough text\n---/);
   assert.equal(JSON.stringify(deps.states).includes('openai-secret'), false);
   assert.deepEqual(result, deps.states[1]);
+});
+
+test('runs the instruction of the chosen prompt', async () => {
+  let received;
+  const deps = dependencies({
+    loadSettings: async () => createDefaultSettings({
+      openaiApiKey: 'openai-secret',
+      prompts: [
+        { id: 'a', name: 'Formal', instruction: 'Make it formal.' },
+        { id: 'b', name: 'Short', instruction: 'Make it shorter.' },
+      ],
+    }),
+    providers: {
+      openai: async (options) => {
+        received = options;
+        return 'Shorter.';
+      },
+      gemini: async () => '',
+    },
+  });
+
+  const result = await runRewrite('words', 'b', deps.value);
+
+  assert.equal(received.prompt, 'Make it shorter.\n\nSelected text:\n---\nwords\n---');
+  assert.equal(result.promptName, 'Short');
+  assert.equal(result.result, 'Shorter.');
 });
 
 test('dispatches to the active Gemini adapter with its configuration', async () => {
@@ -44,7 +72,7 @@ test('dispatches to the active Gemini adapter with its configuration', async () 
       provider: 'gemini',
       geminiApiKey: 'gemini-secret',
       geminiModel: 'gemini-test',
-      prompt: 'Improve this.',
+      prompts: [{ id: 'p1', name: 'Improve', instruction: 'Improve this.' }],
     }),
     providers: {
       openai: async () => assert.fail('OpenAI should not be called'),
@@ -55,7 +83,7 @@ test('dispatches to the active Gemini adapter with its configuration', async () 
     },
   });
 
-  const result = await runRewrite('words', deps.value);
+  const result = await runRewrite('words', 'p1', deps.value);
 
   assert.deepEqual(received, {
     apiKey: 'gemini-secret',
@@ -71,7 +99,7 @@ test('turns invalid settings into a configuration error state', async () => {
     loadSettings: async () => createDefaultSettings({ openaiApiKey: '' }),
   });
 
-  const result = await runRewrite('words', deps.value);
+  const result = await runRewrite('words', 'rewrite', deps.value);
 
   assert.deepEqual(deps.states.map((state) => state.status), ['loading', 'error']);
   assert.deepEqual(result.error, {
@@ -79,6 +107,27 @@ test('turns invalid settings into a configuration error state', async () => {
     retryable: false,
     configuration: true,
   });
+});
+
+test('reports a clear error when the chosen prompt was deleted', async () => {
+  let called = false;
+  const deps = dependencies({
+    providers: {
+      openai: async () => {
+        called = true;
+      },
+      gemini: async () => '',
+    },
+  });
+
+  const result = await runRewrite('words', 'missing-id', deps.value);
+
+  assert.equal(called, false);
+  assert.equal(result.status, 'error');
+  assert.equal(
+    result.error.message,
+    'That prompt was deleted. Select the text again to choose a prompt.',
+  );
 });
 
 test('turns provider failures into safe error states', async () => {
@@ -93,7 +142,7 @@ test('turns provider failures into safe error states', async () => {
     },
   });
 
-  const result = await runRewrite('words', deps.value);
+  const result = await runRewrite('words', 'rewrite', deps.value);
 
   assert.equal(result.status, 'error');
   assert.deepEqual(result.error, {
@@ -101,6 +150,7 @@ test('turns provider failures into safe error states', async () => {
     retryable: true,
     configuration: false,
   });
+  assert.equal(result.promptId, 'rewrite');
 });
 
 test('rejects blank selected text before calling a provider', async () => {
@@ -112,7 +162,7 @@ test('rejects blank selected text before calling a provider', async () => {
     },
   });
 
-  const result = await runRewrite('   ', deps.value);
+  const result = await runRewrite('   ', 'rewrite', deps.value);
 
   assert.equal(called, false);
   assert.equal(result.status, 'error');

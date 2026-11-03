@@ -2,10 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  createChoiceState,
   createErrorState,
   createLoadingState,
   createSuccessState,
 } from '../src/core/request-state.js';
+
+test('creates a choice state that holds the selection until a prompt is picked', () => {
+  assert.deepEqual(createChoiceState('id-1', 'hello'), {
+    status: 'choose',
+    requestId: 'id-1',
+    selectedText: 'hello',
+  });
+});
 
 test('creates a minimal loading state', () => {
   assert.deepEqual(createLoadingState('id-1', 'hello', 'gemini'), {

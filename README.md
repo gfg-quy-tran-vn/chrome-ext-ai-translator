@@ -30,8 +30,10 @@ Chrome keeps the unpacked extension linked to this folder. After updating its fi
 1. Choose **OpenAI** or **Gemini**.
 2. Enter that provider's API key.
 3. Keep the suggested model or enter another model available to your provider account.
-4. Edit the rewrite instruction if desired. The default is:
+4. Manage the **Prompts** list. Each prompt has a name and an instruction. A starter prompt named **Rewrite** uses this instruction:
   > Rewrite the selected text as clear, well-structured English sentences.
+
+   Use **Add prompt** to create more, edit names and instructions, or **Delete prompt** to remove one. Names must be unique, and at least one prompt must remain.
 
    ![Settings page with provider, API key, model, and custom prompt](images/settings.png)
 
@@ -47,11 +49,12 @@ Both provider configurations remain in local Chrome extension storage, but only 
    ![Chrome context menu with Rewrite with AI highlighted](images/menu-context.png)
 
 3. Choose **Rewrite with AI**
-4. The Chrome side panel opens immediately and shows progress, the selected text, and the provider response.
+4. The Chrome side panel opens. Choose a prompt from the **Prompt** dropdown to rewrite the selection with that prompt's instruction.
+5. The side panel shows progress, the selected text, and the provider response. To try another template, choose a different prompt from the same dropdown.
 
    ![Chrome side panel showing selected text and the provider response](images/left-panel.png)
 
-5. Use **Copy response** to copy the result or **Retry** to repeat the last request with the current settings.
+6. Use **Copy response** to copy the result or **Retry** to repeat the last request with the same prompt and the current settings.
 
 If the provider configuration is missing or rejected, choose **Open settings** from the error state, correct it, and retry.
 
@@ -86,14 +89,18 @@ find src tests -name '*.js' -print0 | xargs -0 -n1 node --check
 ## Manual verification checklist
 
 - [ ] Chrome loads the unpacked extension without manifest or service-worker errors.
-- [ ] The options page initially selects OpenAI and displays the default prompt and models.
+- [ ] The options page initially selects OpenAI and displays the default **Rewrite** prompt and models.
+- [ ] Prompts can be added, renamed, edited, and deleted; the last prompt cannot be deleted, and duplicate names are rejected.
+- [ ] Choosing a prompt from the side panel dropdown rewrites the selection with that prompt's instruction.
+- [ ] Switching the dropdown reruns the same selection with the newly chosen prompt.
+- [ ] The extension icon appears on the toolbar, in the side panel, and on `chrome://extensions`.
 - [ ] OpenAI settings save and remain after closing and reopening the options page.
 - [ ] Gemini settings save and remain after closing and reopening the options page.
 - [ ] Switching providers displays the matching key and model while preserving the other provider's values.
 - [ ] **Forget keys** clears both keys and keeps the provider, models, and prompt.
 - [ ] The context-menu item appears when non-empty webpage text is selected.
 - [ ] The context-menu item does not appear when no text is selected.
-- [ ] Selecting the menu item immediately opens the side panel in a loading state.
+- [ ] Selecting the menu item immediately opens the side panel with the selected text and the prompt dropdown.
 - [ ] A valid OpenAI configuration produces a response.
 - [ ] A valid Gemini configuration produces a response.
 - [ ] **Copy response** copies the complete plain-text result.

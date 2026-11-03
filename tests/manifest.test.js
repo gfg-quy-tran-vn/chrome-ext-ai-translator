@@ -25,4 +25,14 @@ test('manifest grants only the extension capabilities and provider origins in sc
   });
   assert.equal(manifest.side_panel.default_path, 'src/sidepanel/sidepanel.html');
   assert.equal(manifest.options_page, 'src/options/options.html');
+  assert.deepEqual(manifest.icons, {
+    16: 'icons/icon16.png',
+    32: 'icons/icon32.png',
+    48: 'icons/icon48.png',
+    128: 'icons/icon128.png',
+  });
+  for (const iconPath of Object.values(manifest.icons)) {
+    const bytes = await readFile(new URL(`../${iconPath}`, import.meta.url));
+    assert.ok(bytes.byteLength > 0, iconPath);
+  }
 });

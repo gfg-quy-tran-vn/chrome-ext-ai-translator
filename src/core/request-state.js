@@ -1,3 +1,11 @@
+export function createChoiceState(requestId, selectedText) {
+  return {
+    status: 'choose',
+    requestId,
+    selectedText,
+  };
+}
+
 export function createLoadingState(requestId, selectedText, provider) {
   return {
     status: 'loading',

@@ -1,4 +1,5 @@
 import { runRewrite } from './coordinator.js';
+import { createChoiceState } from './core/request-state.js';
 import { handleModelDiscovery } from './model-discovery.js';
 import { callGemini, listGeminiModels } from './providers/gemini.js';
 import { callOpenAI, listOpenAIModels } from './providers/openai.js';
@@ -13,8 +14,8 @@ async function hardenStorageAccess() {
   ]);
 }
 
-function rewrite(selectedText) {
-  return runRewrite(selectedText, {
+function rewrite(selectedText, promptId) {
+  return runRewrite(selectedText, promptId, {
     loadSettings: () => chrome.storage.local.get(),
     saveState: (state) => chrome.storage.session.set({
       [SESSION_STATE_KEY]: state,
@@ -24,6 +25,12 @@ function rewrite(selectedText) {
       openai: callOpenAI,
       gemini: callGemini,
     },
+  });
+}
+
+function choosePrompt(selectedText) {
+  return chrome.storage.session.set({
+    [SESSION_STATE_KEY]: createChoiceState(crypto.randomUUID(), selectedText),
   });
 }
 
@@ -49,11 +56,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     return;
   }
 
-  const rewritePromise = rewrite(info.selectionText);
+  // Open the panel right away (it must stay within the user gesture), then
+  // save the selection so the panel can offer the prompt list.
   if (typeof tab?.id === 'number') {
     void chrome.sidePanel.open({ tabId: tab.id }).catch(logInternalFailure);
   }
-  void rewritePromise.catch(logInternalFailure);
+  void choosePrompt(info.selectionText).catch(logInternalFailure);
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -77,14 +85,35 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === 'run-rewrite') {
+    chrome.storage.session.get(SESSION_STATE_KEY)
+      .then((stored) => {
+        const state = stored[SESSION_STATE_KEY];
+        if (!state?.selectedText?.trim()) {
+          throw new Error('Select text on a webpage, then choose a prompt.');
+        }
+        if (typeof message.promptId !== 'string' || !message.promptId) {
+          throw new Error('Choose a prompt.');
+        }
+        return rewrite(state.selectedText, message.promptId);
+      })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({
+        ok: false,
+        message: error?.message || 'Could not run the prompt.',
+      }));
+
+    return true;
+  }
+
   if (message?.type === 'retry-last-request') {
     chrome.storage.session.get(SESSION_STATE_KEY)
       .then((stored) => {
-        const selectedText = stored[SESSION_STATE_KEY]?.selectedText;
+        const { selectedText, promptId } = stored[SESSION_STATE_KEY] ?? {};
         if (!selectedText) {
           throw new Error('There is no previous selection to retry.');
         }
-        return rewrite(selectedText);
+        return rewrite(selectedText, promptId);
       })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({

@@ -1,5 +1,6 @@
 import {
   createDefaultSettings,
+  validatePrompts,
   validateSettings,
 } from '../core/settings.js';
 import {
@@ -18,6 +19,8 @@ const geminiFields = document.querySelector('#gemini-fields');
 const forgetKeysButton = document.querySelector('#forget-keys');
 const saveSettingsButton = document.querySelector('#save-settings');
 const status = document.querySelector('#status');
+const promptsList = document.querySelector('#prompts-list');
+const addPromptButton = document.querySelector('#add-prompt');
 
 const providerControls = {
   openai: {
@@ -38,6 +41,10 @@ let modelStates = {
   openai: createModelState(),
   gemini: createModelState(),
 };
+
+// Working copy of the prompt list. Edits mutate these objects directly so
+// typing does not re-render the list and lose focus.
+let draftPrompts = [];
 
 function selectedProvider() {
   return new FormData(form).get('provider');
@@ -101,11 +108,78 @@ function renderModelStates() {
   renderSaveState();
 }
 
+function renderPromptItem(prompt) {
+  const item = document.createElement('div');
+  item.className = 'prompt-item';
+
+  const nameLabel = document.createElement('label');
+  nameLabel.textContent = 'Name';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.maxLength = 60;
+  nameInput.placeholder = 'e.g. Formal tone';
+  nameInput.value = prompt.name;
+  nameInput.addEventListener('input', () => {
+    prompt.name = nameInput.value;
+  });
+  nameLabel.append(nameInput);
+
+  const instructionLabel = document.createElement('label');
+  instructionLabel.textContent = 'Instruction';
+  const instructionInput = document.createElement('textarea');
+  instructionInput.rows = 4;
+  instructionInput.value = prompt.instruction;
+  instructionInput.addEventListener('input', () => {
+    prompt.instruction = instructionInput.value;
+  });
+  instructionLabel.append(instructionInput);
+
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'secondary danger';
+  deleteButton.textContent = 'Delete prompt';
+  deleteButton.disabled = draftPrompts.length <= 1;
+  deleteButton.addEventListener('click', () => {
+    draftPrompts = draftPrompts.filter((candidate) => candidate !== prompt);
+    renderPrompts();
+    showStatus('');
+  });
+
+  item.append(nameLabel, instructionLabel, deleteButton);
+  return item;
+}
+
+function renderPrompts() {
+  promptsList.replaceChildren(...draftPrompts.map(renderPromptItem));
+}
+
+function clonePrompts(prompts) {
+  return prompts.map(({ id, name, instruction }) => ({ id, name, instruction }));
+}
+
+function trimmedPrompts() {
+  return draftPrompts.map(({ id, name, instruction }) => ({
+    id,
+    name: name.trim(),
+    instruction: instruction.trim(),
+  }));
+}
+
+function providerConfigurationForSave(provider) {
+  const state = modelStates[provider];
+  const mayUseCurrent = state.key === state.savedKey || state.validation === 'valid';
+  return {
+    apiKey: mayUseCurrent ? state.key : state.savedKey,
+    model: mayUseCurrent ? state.selectedModel : state.savedModel,
+  };
+}
+
 function renderSettings(settings) {
   form.elements.provider.value = settings.provider;
   providerControls.openai.key.value = settings.openaiApiKey;
   providerControls.gemini.key.value = settings.geminiApiKey;
-  form.elements.prompt.value = settings.prompt;
+  draftPrompts = clonePrompts(settings.prompts);
+  renderPrompts();
   modelStates = {
     openai: createModelState({
       savedKey: settings.openaiApiKey,
@@ -120,15 +194,6 @@ function renderSettings(settings) {
   renderModelStates();
 }
 
-function providerConfigurationForSave(provider) {
-  const state = modelStates[provider];
-  const mayUseCurrent = state.key === state.savedKey || state.validation === 'valid';
-  return {
-    apiKey: mayUseCurrent ? state.key : state.savedKey,
-    model: mayUseCurrent ? state.selectedModel : state.savedModel,
-  };
-}
-
 function readSettings() {
   const openai = providerConfigurationForSave('openai');
   const gemini = providerConfigurationForSave('gemini');
@@ -139,7 +204,7 @@ function readSettings() {
     openaiModel: openai.model,
     geminiApiKey: gemini.apiKey,
     geminiModel: gemini.model,
-    prompt: form.elements.prompt.value.trim(),
+    prompts: trimmedPrompts(),
   });
 }
 
@@ -154,6 +219,13 @@ form.addEventListener('change', (event) => {
     renderSaveState();
     showStatus('');
   }
+});
+
+addPromptButton.addEventListener('click', () => {
+  draftPrompts.push({ id: crypto.randomUUID(), name: '', instruction: '' });
+  renderPrompts();
+  promptsList.lastElementChild?.querySelector('input').focus();
+  showStatus('');
 });
 
 for (const provider of ['openai', 'gemini']) {
@@ -217,6 +289,12 @@ form.addEventListener('submit', async (event) => {
     return;
   }
 
+  const promptValidation = validatePrompts(settings.prompts);
+  if (!promptValidation.valid) {
+    showStatus(promptValidation.message, 'error');
+    return;
+  }
+
   try {
     await chrome.storage.local.set(settings);
     renderSettings(settings);
@@ -228,13 +306,20 @@ form.addEventListener('submit', async (event) => {
 
 forgetKeysButton.addEventListener('click', async () => {
   const defaults = createDefaultSettings();
+  const prompts = trimmedPrompts();
+  const promptValidation = validatePrompts(prompts);
+  if (!promptValidation.valid) {
+    showStatus(promptValidation.message, 'error');
+    return;
+  }
+
   const settings = createDefaultSettings({
     provider: selectedProvider(),
     openaiApiKey: '',
     openaiModel: defaults.openaiModel,
     geminiApiKey: '',
     geminiModel: defaults.geminiModel,
-    prompt: form.elements.prompt.value.trim(),
+    prompts,
   });
 
   try {

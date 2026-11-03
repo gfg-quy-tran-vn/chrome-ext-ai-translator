@@ -169,6 +169,39 @@ button:disabled {
   line-height: 1.45;
 }
 
+.prompts-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prompt-item {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #dce1ea;
+  border-radius: 12px;
+  background: #f9fafc;
+}
+
+.prompt-item label {
+  margin: 0;
+}
+
+.prompt-item label > input,
+.prompt-item label > textarea {
+  display: block;
+  margin-top: 7px;
+}
+
+.prompt-item button {
+  justify-self: end;
+}
+
+.add-prompt-button {
+  width: 100%;
+}
+
 .form-actions {
   display: flex;
   justify-content: space-between;
@@ -266,6 +299,11 @@ button {
 
   .provider-option span {
     border-color: #424b5d;
+  }
+
+  .prompt-item {
+    border-color: #303746;
+    background: #141923;
   }
 
   .provider-option input:checked + span {

@@ -1,3 +1,4 @@
+import { createDefaultSettings } from '../core/settings.js';
 import { renderState } from './render.js';
 
 const SESSION_STATE_KEY = 'rewriteRequestState';
@@ -13,6 +14,7 @@ const elements = {
   statusLabel: document.querySelector('#status-label'),
   result: document.querySelector('#result'),
   errorMessage: document.querySelector('#error-message'),
+  promptSelect: document.querySelector('#prompt-select'),
   copyButton: document.querySelector('#copy-button'),
   retryButton: document.querySelector('#retry-button'),
   settingsButton: document.querySelector('#configuration-settings-button'),
@@ -21,13 +23,81 @@ const elements = {
 const headerSettingsButton = document.querySelector('#header-settings-button');
 const actionStatus = document.querySelector('#action-status');
 let currentState = null;
+let promptSync = 0;
 
 function update(state) {
   currentState = state ?? null;
   actionStatus.textContent = '';
   elements.retryButton.disabled = false;
   renderState(elements, currentState);
+  if (currentState?.status) {
+    void syncPromptSelect();
+  }
 }
+
+async function loadPrompts() {
+  return createDefaultSettings(await chrome.storage.local.get()).prompts;
+}
+
+async function syncPromptSelect() {
+  const syncId = ++promptSync;
+  let prompts;
+  try {
+    prompts = await loadPrompts();
+  } catch {
+    if (syncId === promptSync) {
+      actionStatus.textContent = 'Could not load prompts.';
+    }
+    return;
+  }
+  if (syncId !== promptSync) {
+    return;
+  }
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Choose a prompt';
+
+  const options = prompts.map((prompt) => {
+    const option = document.createElement('option');
+    option.value = prompt.id;
+    option.textContent = prompt.name;
+    option.title = prompt.instruction;
+    return option;
+  });
+
+  const select = elements.promptSelect;
+  select.replaceChildren(placeholder, ...options);
+  const promptId = currentState?.promptId ?? '';
+  select.value = prompts.some((prompt) => prompt.id === promptId) ? promptId : '';
+  select.disabled = currentState?.status === 'loading';
+}
+
+async function runPrompt(promptId) {
+  elements.promptSelect.disabled = true;
+  actionStatus.textContent = 'Starting…';
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'run-rewrite',
+      promptId,
+    });
+    if (!response?.ok) {
+      throw new Error(response?.message || 'Could not run the prompt.');
+    }
+  } catch (error) {
+    actionStatus.textContent = error?.message || 'Could not run the prompt.';
+    elements.promptSelect.disabled = currentState?.status === 'loading';
+  }
+}
+
+elements.promptSelect.addEventListener('change', () => {
+  const promptId = elements.promptSelect.value;
+  if (!promptId || promptId === currentState?.promptId) {
+    return;
+  }
+  void runPrompt(promptId);
+});
 
 async function openSettings() {
   await chrome.runtime.openOptionsPage();
@@ -72,10 +142,15 @@ elements.retryButton.addEventListener('click', async () => {
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'session' || !(SESSION_STATE_KEY in changes)) {
+  if (areaName === 'session' && SESSION_STATE_KEY in changes) {
+    update(changes[SESSION_STATE_KEY].newValue);
     return;
   }
-  update(changes[SESSION_STATE_KEY].newValue);
+
+  // Keep the picker in sync when prompts are edited in Settings.
+  if (areaName === 'local' && 'prompts' in changes && currentState?.status) {
+    void syncPromptSelect();
+  }
 });
 
 async function initialize() {

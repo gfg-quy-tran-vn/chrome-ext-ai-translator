@@ -11,6 +11,7 @@ function createElements() {
   return {
     emptyView: element(),
     requestView: element(),
+    promptSelect: element(),
     loadingView: element(),
     responseView: element(),
     errorView: element(),
@@ -35,6 +36,37 @@ test('renders the empty guidance view without request controls', () => {
   assert.equal(elements.copyButton.hidden, true);
   assert.equal(elements.retryButton.hidden, true);
   assert.equal(elements.settingsButton.hidden, true);
+});
+
+test('shows the prompt picker for a selection waiting for a prompt', () => {
+  const elements = createElements();
+
+  renderState(elements, {
+    status: 'choose',
+    selectedText: 'rough words',
+  });
+
+  assert.equal(elements.requestView.hidden, false);
+  assert.equal(elements.promptSelect.disabled, false);
+  assert.equal(elements.loadingView.hidden, true);
+  assert.equal(elements.responseView.hidden, true);
+  assert.equal(elements.errorView.hidden, true);
+  assert.equal(elements.retryButton.hidden, true);
+  assert.equal(elements.statusLabel.textContent, 'Choose a prompt');
+});
+
+test('names the prompt in the loading status', () => {
+  const elements = createElements();
+
+  renderState(elements, {
+    status: 'loading',
+    selectedText: 'rough words',
+    provider: 'openai',
+    promptName: 'Formal',
+  });
+
+  assert.equal(elements.statusLabel.textContent, 'Rewriting with “Formal”…');
+  assert.equal(elements.promptSelect.disabled, true);
 });
 
 test('renders a loading request', () => {

@@ -16,6 +16,7 @@ export function renderState(elements, state) {
   elements.selectedText.textContent = state.selectedText ?? '';
   elements.providerLabel.textContent = providerName(state.provider);
 
+  const isChoosing = state.status === 'choose';
   const isLoading = state.status === 'loading';
   const isSuccess = state.status === 'success';
   const isError = state.status === 'error';
@@ -24,6 +25,7 @@ export function renderState(elements, state) {
     state.error?.retryable || configurationError
   ));
 
+  elements.promptSelect.disabled = isLoading;
   elements.loadingView.hidden = !isLoading;
   elements.responseView.hidden = !isSuccess;
   elements.errorView.hidden = !isError;
@@ -31,11 +33,13 @@ export function renderState(elements, state) {
   elements.retryButton.hidden = !canRetry;
   elements.settingsButton.hidden = !configurationError;
 
-  elements.statusLabel.textContent = isLoading
-    ? 'Rewriting…'
-    : isSuccess
-      ? 'Ready'
-      : 'Error';
+  elements.statusLabel.textContent = isChoosing
+    ? 'Choose a prompt'
+    : isLoading
+      ? `Rewriting${state.promptName ? ` with “${state.promptName}”` : ''}…`
+      : isSuccess
+        ? 'Ready'
+        : 'Error';
   elements.result.textContent = isSuccess ? state.result ?? '' : '';
   elements.errorMessage.textContent = isError
     ? state.error?.message ?? 'An unexpected error occurred.'

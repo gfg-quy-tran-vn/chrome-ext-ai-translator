@@ -19,7 +19,7 @@
       <section id="empty-view" class="empty-view">
         <div class="empty-icon" aria-hidden="true">Aa</div>
         <h2>Ready to rewrite</h2>
-        <p>Select text on a webpage, right-click it, and choose <strong>Rewrite with AI</strong>.</p>
+        <p>Select text on a webpage, right-click it, choose <strong>Rewrite with AI</strong>, then pick a prompt from the dropdown.</p>
       </section>
 
       <section id="request-view" hidden>
@@ -32,6 +32,11 @@
           <h2 id="selected-heading">Selected text</h2>
           <blockquote id="selected-text"></blockquote>
         </section>
+
+        <div class="prompt-field">
+          <label for="prompt-select">Prompt</label>
+          <select id="prompt-select"></select>
+        </div>
 
         <section id="loading-view" class="loading-card" aria-live="polite" hidden>
           <span class="spinner" aria-hidden="true"></span>

@@ -54,11 +54,11 @@
           <p class="model-status" id="gemini-model-status" role="status" aria-live="polite"></p>
         </section>
 
-        <section class="card" aria-labelledby="prompt-heading">
-          <h2 id="prompt-heading">Custom prompt</h2>
-          <label class="sr-only" for="custom-prompt">Rewrite instruction</label>
-          <textarea id="custom-prompt" name="prompt" rows="5"></textarea>
-          <p class="help">The selected text is added automatically after this instruction.</p>
+        <section class="card" aria-labelledby="prompts-heading">
+          <h2 id="prompts-heading">Prompts</h2>
+          <p class="help">Each prompt appears in the side panel after you select text and choose Rewrite with AI. The selected text is added automatically after the instruction.</p>
+          <div id="prompts-list" class="prompts-list"></div>
+          <button class="secondary add-prompt-button" id="add-prompt" type="button">Add prompt</button>
         </section>
 
         <div class="form-actions">
